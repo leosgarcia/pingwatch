@@ -1,0 +1,18 @@
+[package]
+name = "pingwatch"
+version = "0.1.0"
+edition = "2026"
+license = "MIT License"
+description = "PingWatch is a Ping tool developed in Rust. It supports concurrent Ping for multiple addresses, visual chart display, real-time data updates, and other features."
+authors = ["Leonardo Garcia"]
+
+[dependencies]
+clap = { version = "4.5.23", features = ["derive"] }
+ratatui = "0.29.0"
+tokio = { version = "1.42.0", features = ["full"] }
+pinger="2.0.0"
+anyhow="1.0.89"
+prometheus = "0.13"
+hyper = { version = "1.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["tokio", "server", "http1", "http2"] }
+http-body-util = "0.1"
