@@ -6,12 +6,14 @@ use ratatui::widgets::{Block, Borders, Paragraph, Sparkline, Wrap};
 use crate::ip_data::IpData;
 use crate::ui::point::get_loss_color_and_emoji;
 use crate::ui::utils::{calculate_avg_rtt, calculate_jitter, calculate_loss_pkg, draw_errors_section};
+use crate::i18n;
 
 pub fn draw_sparkline_view<B: Backend>(
     f: &mut Frame,
     ip_data: &[IpData],
     errs: &[String],
     area: Rect,
+    lang: &str,
 ) {
     let data = ip_data.to_vec();
     let n = data.len().max(1);
@@ -30,7 +32,7 @@ pub fn draw_sparkline_view<B: Backend>(
     let legend = Line::from(vec![
         Span::styled(" 🏎  PingWatch SparkLine View ", Style::default().fg(Color::Cyan)),
         Span::raw("("),
-        Span::raw(" Blank area means timeout or error"),
+        Span::raw(i18n::t(lang, "sparkline-view-note")),
         Span::raw(")"),
     ]);
 
@@ -44,31 +46,31 @@ pub fn draw_sparkline_view<B: Backend>(
         let loss_pkg_color = get_loss_color_and_emoji(loss_pkg);
 
         let info_line = Line::from(vec![
-            Span::raw("Target: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-target"))),
             Span::styled(format!("{} ", ip.addr), Style::default().fg(Color::Green)),
-            Span::raw("Ip: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-ip"))),
             Span::styled(format!("{} ", ip.ip), Style::default().fg(Color::Green)),
-            Span::raw("Last: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-last-rtt"))),
             Span::styled(
                 if ip.last_attr == 0.0 {
-                    "< 0.01ms".to_string()
+                    i18n::t(lang, "metric-less-than")
                 } else if ip.last_attr == -1.0 {
-                    "0.0ms".to_string()
+                    i18n::t(lang, "metric-zero")
                 } else {
-                    format!("{:.2}ms", ip.last_attr)
+                    format!("{:.2}{}", ip.last_attr, i18n::t(lang, "unit-ms"))
                 },
                 Style::default().fg(Color::Green)
             ),
-            Span::raw(" Avg: "),
-            Span::styled(format!("{:.2}ms", avg_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Max: "),
-            Span::styled(format!("{:.2}ms", ip.max_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Min: "),
-            Span::styled(format!("{:.2}ms", ip.min_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Jitter: "),
-            Span::styled(format!("{:.2}ms", jitter), Style::default().fg(Color::Green)),
-            Span::raw(" Loss: "),
-            Span::styled(format!("{:.2}%", loss_pkg), Style::default().fg(loss_pkg_color)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-avg-rtt"))),
+            Span::styled(format!("{:.2}{}", avg_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-max"))),
+            Span::styled(format!("{:.2}{}", ip.max_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-min"))),
+            Span::styled(format!("{:.2}{}", ip.min_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-jitter"))),
+            Span::styled(format!("{:.2}{}", jitter, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-loss"))),
+            Span::styled(format!("{:.2}{}", loss_pkg, i18n::t(lang, "unit-percent")), Style::default().fg(loss_pkg_color)),
         ]);
 
         let info_para = Paragraph::new(info_line).wrap(Wrap { trim: true });

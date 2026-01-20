@@ -10,6 +10,7 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::time::Duration;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyModifiers};
+use crate::i18n;
 
 /// init terminal
 pub fn init_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>, Box<dyn Error>> {
@@ -40,6 +41,7 @@ pub fn draw_interface<B: Backend>(
     view_type: &str,
     ip_data: &[IpData],
     errs: &[String],
+    lang: &str,
 ) -> Result<(), Box<dyn Error>> {
     terminal.draw(|f| {
         match view_type {
@@ -48,15 +50,15 @@ pub fn draw_interface<B: Backend>(
             }
             "table" => {
                 let size = f.area();
-                draw_table_view::<B>(f, ip_data, errs, size);
+                draw_table_view::<B>(f, ip_data, errs, size, lang);
             }
             "point" => {
                 let size = f.area();
-                draw_point_view::<B>(f, ip_data, errs, size);
+                draw_point_view::<B>(f, ip_data, errs, size, lang);
             }
             "sparkline" => {
                 let size = f.area();
-                draw_sparkline_view::<B>(f, ip_data, errs, size);
+                draw_sparkline_view::<B>(f, ip_data, errs, size, lang);
             }
             _ => {
                 draw_graph_view::<B>(f, ip_data, errs);
@@ -75,6 +77,7 @@ pub fn draw_interface_with_updates<B: Backend>(
     running: Arc<Mutex<bool>>,
     errs: Arc<Mutex<Vec<String>>>,
     output_file: Option<String>,
+    lang: &str,
 ) -> Result<(), Box<dyn Error>> {
     let mut output_file_handle = if let Some(ref output_path) = output_file {
         match std::fs::OpenOptions::new()
@@ -150,6 +153,7 @@ pub fn draw_interface_with_updates<B: Backend>(
                 view_type,
                 &ip_data,
                 &mut errs.lock().unwrap(),
+                lang,
             ).ok();
         }
     }

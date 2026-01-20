@@ -6,6 +6,7 @@ mod ui;
 mod ping_event;
 mod data_processor;
 mod exporter;
+mod i18n;
 
 use clap::{Parser, Subcommand};
 use std::collections::{HashSet, VecDeque};
@@ -73,6 +74,9 @@ struct Args {
     #[arg(short = 'o', long = "output", help = "Output file to save ping results")]
     output: Option<String>,
 
+    #[arg(long = "lang", help = "Language: en, pt-BR, es (default: system language)")]
+    lang: Option<String>,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -100,6 +104,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // parse command line arguments
     let args = Args::parse();
 
+    // Determine language: command line arg > environment variable > system language > default to 'en'
+    let lang = args.lang
+        .clone()
+        .or_else(|| std::env::var("PINGWATCH_LANG").ok())
+        .unwrap_or_else(|| i18n::detect_system_language());
+
     match args.command {
         Some(Commands::Exporter { target, interval, port }) => {
             let worker_threads = (target.len() + 1).max(1);
@@ -109,7 +119,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .enable_all()
                 .build()?;
 
-            let res = rt.block_on(run_exporter_mode(target, interval, port));
+            let res = rt.block_on(run_exporter_mode(target, interval, port, lang));
 
             // if error print error message and exit
             if let Err(err) = res {
@@ -120,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => {
             // Default ping mode
             if args.target.is_empty() {
-                eprintln!("Error: target IP address or hostname is required");
+                eprintln!("{}", i18n::t(&lang, "error-target-required"));
                 std::process::exit(1);
             }
 
@@ -130,7 +140,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // check output file
             if let Some(ref output_path) = args.output {
                 if std::path::Path::new(output_path).exists() {
-                    eprintln!("Output file already exists: {}", output_path);
+                    let mut args_map = std::collections::HashMap::new();
+                    args_map.insert("path".to_string(), output_path.clone());
+                    eprintln!("{}", i18n::t_with_args(&lang, "error-output-exists", &args_map));
                     std::process::exit(1);
                 }
             }
@@ -155,7 +167,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .enable_all()
                 .build()?;
 
-            let res = rt.block_on(run_app(targets, args.count, args.interval, running.clone(), args.force_ipv6, args.multiple, args.view_type, args.output));
+            let res = rt.block_on(run_app(targets, args.count, args.interval, running.clone(), args.force_ipv6, args.multiple, args.view_type, args.output, lang));
 
             // if error print error message and exit
             if let Err(err) = res {
@@ -176,6 +188,7 @@ async fn run_app(
     multiple: i32,
     view_type: String,
     output_file: Option<String>,
+    lang: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
 
     // init terminal
@@ -253,6 +266,7 @@ async fn run_app(
             &view_type,
             &ip_data,
             &mut errs.lock().unwrap(),
+            &lang,
         ).ok();
     }
     for (i, ip) in ips.iter().enumerate() {
@@ -280,6 +294,7 @@ async fn run_app(
     let view_type_for_ui = view_type.clone();
     let ip_data_for_ui = ip_data.clone();
     let errs_for_ui = errs.clone();
+    let lang_for_ui = lang.clone();
     
     let ui_task = task::spawn(async move {
         let mut guard = terminal_guard_for_ui.lock().unwrap();
@@ -291,6 +306,7 @@ async fn run_app(
             running_for_ui,
             errs_for_ui,
             output_file,
+            &lang_for_ui,
         ).ok();
     });
 
@@ -315,6 +331,7 @@ async fn run_exporter_mode(
     targets: Vec<String>,
     interval: i32,
     port: u16,
+    lang: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Create Prometheus metrics collector
     let prometheus_metrics = Arc::new(PrometheusMetrics::new()?);
@@ -327,6 +344,7 @@ async fn run_exporter_mode(
     // Setup signal handling
     let running_for_signal = running.clone();
     let shutdown_tx_for_signal = shutdown_tx.clone();
+    let lang_for_signal = lang.clone();
     tokio::spawn(async move {
         match signal::ctrl_c().await {
             Ok(()) => {
@@ -339,7 +357,9 @@ async fn run_exporter_mode(
                 }
             }
             Err(err) => {
-                eprintln!("Unable to listen for shutdown signal: {}", err);
+                let mut args_map = std::collections::HashMap::new();
+                args_map.insert("error".to_string(), err.to_string());
+                eprintln!("{}", i18n::t_with_args(&lang_for_signal, "error-unable-shutdown", &args_map));
             }
         }
     });

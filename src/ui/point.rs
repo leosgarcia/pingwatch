@@ -5,6 +5,7 @@ use ratatui::prelude::{Color, Line, Span, Style};
 use ratatui::widgets::{Block, Paragraph, Wrap};
 use crate::ip_data::IpData;
 use crate::ui::utils::{calculate_avg_rtt, calculate_jitter, calculate_loss_pkg, draw_errors_section};
+use crate::i18n;
 
 pub fn get_loss_color_and_emoji(loss_rate: f64) -> Color {
     if loss_rate > 50.0 {
@@ -21,6 +22,7 @@ pub fn draw_point_view<B: Backend>(
     ip_data: &[IpData],
     errs: &[String],
     area: Rect,
+    lang: &str,
 ) {
     let data = ip_data.to_vec();
 
@@ -42,11 +44,11 @@ pub fn draw_point_view<B: Backend>(
         Span::styled(" 🏎  PingWatch Point View ", Style::default().fg(Color::Cyan)),
         Span::raw("("),
         Span::styled("•", Style::default().fg(Color::Green)),
-        Span::raw(" Healthy, "),
+        Span::raw(format!(" {}, ", i18n::t(lang, "point-view-legend"))),
         Span::styled("↑", Style::default().fg(Color::Yellow)),
-        Span::raw(" High Latency (over 80% of max), "),
+        Span::raw(format!(" {} (over 80% of max), ", i18n::t(lang, "point-view-high-latency"))),
         Span::styled("✗", Style::default().fg(Color::Red)),
-        Span::raw(" Timeout)"),
+        Span::raw(format!(" {})", i18n::t(lang, "point-view-timeout"))),
     ]);
 
     let legend_paragraph = Paragraph::new(legend);
@@ -70,33 +72,32 @@ pub fn draw_point_view<B: Backend>(
 
         // Create the info line (row 1) with all metrics from table view
         let info_line = Line::from(vec![
-            Span::raw("Target: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-target"))),
             Span::styled(format!("{} ", ip.addr), Style::default().fg(Color::Green)),
-            Span::raw("Ip: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-ip"))),
             Span::styled(format!("{} ", ip.ip), Style::default().fg(Color::Green)),
-            Span::raw("Last: "),
+            Span::raw(format!("{}: ", i18n::t(lang, "label-last-rtt"))),
             Span::styled(
                 if ip.last_attr == 0.0 {
-                    "< 0.01ms".to_string()
+                    i18n::t(lang, "metric-less-than")
                 } else if ip.last_attr == -1.0 {
-                    "0.0ms".to_string()
+                    i18n::t(lang, "metric-zero")
                 } else {
-                    format!("{:.2}ms", ip.last_attr)
+                    format!("{:.2}{}", ip.last_attr, i18n::t(lang, "unit-ms"))
                 },
                 Style::default().fg(Color::Green)
             ),
-            Span::raw(" Avg: "),
-            Span::styled(format!("{:.2}ms", avg_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Max: "),
-            Span::styled(format!("{:.2}ms", ip.max_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Min: "),
-            Span::styled(format!("{:.2}ms", ip.min_rtt), Style::default().fg(Color::Green)),
-            Span::raw(" Jitter: "),
-            Span::styled(format!("{:.2}ms", jitter), Style::default().fg(Color::Green)),
-            Span::raw(" Loss: "),
-            Span::styled(format!("{:.2}%", loss_pkg), Style::default().fg(loss_pkg_color)), ]);
-
-        let mut points_spans = Vec::new();
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-avg-rtt"))),
+            Span::styled(format!("{:.2}{}", avg_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-max"))),
+            Span::styled(format!("{:.2}{}", ip.max_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-min"))),
+            Span::styled(format!("{:.2}{}", ip.min_rtt, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-jitter"))),
+            Span::styled(format!("{:.2}{}", jitter, i18n::t(lang, "unit-ms")), Style::default().fg(Color::Green)),
+            Span::raw(format!(" {}: ", i18n::t(lang, "label-loss"))),
+            Span::styled(format!("{:.2}{}", loss_pkg, i18n::t(lang, "unit-percent")), Style::default().fg(loss_pkg_color)), 
+        ]);
         for &rtt in &ip.rtts {
             if rtt < 0.0 {
                 // Timeout/packet loss - red X

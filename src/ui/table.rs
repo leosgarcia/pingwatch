@@ -5,6 +5,7 @@ use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Paragraph, Row, Table};
 use crate::ip_data::IpData;
 use crate::ui::utils::{calculate_avg_rtt, calculate_jitter, calculate_loss_pkg, draw_errors_section};
+use crate::i18n;
 
 
 pub fn draw_table_view<B: Backend>(
@@ -12,6 +13,7 @@ pub fn draw_table_view<B: Backend>(
     ip_data: &[IpData],
     errs: &[String],
     area: Rect,
+    lang: &str,
 ) {
     let mut data = ip_data.to_vec();
 
@@ -40,15 +42,15 @@ pub fn draw_table_view<B: Backend>(
 
     // create header
     let header = Row::new(vec![
-        "Rank",
-        "Target",
-        "Ip",
-        "Last Rtt",
-        "Avg Rtt",
-        "Max",
-        "Min",
-        "Jitter",
-        "Loss",
+        i18n::t(lang, "label-rank"),
+        i18n::t(lang, "label-target"),
+        i18n::t(lang, "label-ip"),
+        i18n::t(lang, "label-last-rtt"),
+        i18n::t(lang, "label-avg-rtt"),
+        i18n::t(lang, "label-max"),
+        i18n::t(lang, "label-min"),
+        i18n::t(lang, "label-jitter"),
+        i18n::t(lang, "label-loss"),
     ])
         .style(header_style)
         .height(1);
@@ -61,11 +63,11 @@ pub fn draw_table_view<B: Backend>(
         let loss_pkg = calculate_loss_pkg(data.timeout, data.received);
 
         let rank = match index {
-            0 => "🥇".to_string(),
-            1 => "🥈".to_string(),
-            2 => "🥉".to_string(),
-            n if n < 10 && n != ip_data.len() - 1 => "🏆".to_string(),
-            _ => "🐢".to_string(),
+            0 => i18n::t(lang, "rank-first"),
+            1 => i18n::t(lang, "rank-second"),
+            2 => i18n::t(lang, "rank-third"),
+            n if n < 10 && n != ip_data.len() - 1 => i18n::t(lang, "rank-top-10"),
+            _ => i18n::t(lang, "rank-slow"),
         };
 
         let row = Row::new(vec![
@@ -73,17 +75,17 @@ pub fn draw_table_view<B: Backend>(
             data.addr.clone(),
             data.ip.clone(),
             if data.last_attr == 0.0 {
-                "< 0.01ms".to_string()
+                i18n::t(lang, "metric-less-than")
             } else if data.last_attr == -1.0 {
-                "0.0ms".to_string()
+                i18n::t(lang, "metric-zero")
             } else {
-                format!("{:.2}ms", data.last_attr)
+                format!("{:.2}{}", data.last_attr, i18n::t(lang, "unit-ms"))
             },
-            format!("{:.2}ms", avg_rtt),
-            format!("{:.2}ms", data.max_rtt),
-            format!("{:.2}ms", data.min_rtt),
-            format!("{:.2}ms", jitter),
-            format!("{:.2}%", loss_pkg),
+            format!("{:.2}{}", avg_rtt, i18n::t(lang, "unit-ms")),
+            format!("{:.2}{}", data.max_rtt, i18n::t(lang, "unit-ms")),
+            format!("{:.2}{}", data.min_rtt, i18n::t(lang, "unit-ms")),
+            format!("{:.2}{}", jitter, i18n::t(lang, "unit-ms")),
+            format!("{:.2}{}", loss_pkg, i18n::t(lang, "unit-percent")),
         ]).height(1);
 
         // highlight the row with different colors
