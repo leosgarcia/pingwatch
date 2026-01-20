@@ -1,7 +1,7 @@
 # PingWatch
 
 NetPulse é uma ferramenta de monitoramento de conectividade de rede,
-inspirada no projeto Nping de hanshuaikang.
+insirada no projeto PingWatch, que foi baseado no Nping de hanshuaikang.
 
 ## Funcionalidades
 - Ping paralelo
@@ -10,7 +10,7 @@ inspirada no projeto Nping de hanshuaikang.
 - Expansível para GUI e agentes
 
 ## Créditos
-Este projeto é baseado no código do projeto Nping:
+Este projeto (PingWatch) é uma evolução baseada no código do projeto Nping:
 https://github.com/hanshuaikang/Nping
 
 Licenciado sob MIT.

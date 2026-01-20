@@ -39,7 +39,7 @@ pub fn draw_point_view<B: Backend>(
 
     // draw legend
     let legend = Line::from(vec![
-        Span::styled(" 🏎  Nping Point View ", Style::default().fg(Color::Cyan)),
+        Span::styled(" 🏎  PingWatch Point View ", Style::default().fg(Color::Cyan)),
         Span::raw("("),
         Span::styled("•", Style::default().fg(Color::Green)),
         Span::raw(" Healthy, "),

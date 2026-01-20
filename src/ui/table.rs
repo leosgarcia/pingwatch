@@ -88,9 +88,9 @@ pub fn draw_table_view<B: Backend>(
 
         // highlight the row with different colors
         if loss_pkg > 50.0 {
-            row.style(Style::default().bg(Color::Red).fg(Color::White)) // 淡红色
+            row.style(Style::default().bg(Color::Red).fg(Color::White)) // Light red color
         } else if loss_pkg > 0.0 {
-            row.style(Style::default().bg(Color::Yellow).fg(Color::White)) // 淡黄色
+            row.style(Style::default().bg(Color::Yellow).fg(Color::White)) // Light yellow color
         } else {
             row
         }
@@ -113,7 +113,7 @@ pub fn draw_table_view<B: Backend>(
     )
         .header(header)
         .block(Block::default()
-            .title("🏎  Nping Table (Sort by: Loss Rate ↑ then Latency ↑)"))
+            .title("🏎  PingWatch Table (Sort by: Loss Rate ↑ then Latency ↑)"))
         .row_highlight_style(selected_style)
         .highlight_symbol(">> ");
 

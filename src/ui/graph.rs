@@ -73,9 +73,9 @@ pub fn draw_graph_view<B: Backend>(
                     .margin(1)
                     .constraints(
                         [
-                            Constraint::Length(1),  // 目标标题
-                            Constraint::Max(4),  // 段落占用较少行
-                            Constraint::Max(20),     // chart 动态扩大
+                            Constraint::Length(1),  // Target title
+                            Constraint::Max(4),  // Paragraph takes up few lines
+                            Constraint::Max(20),     // chart expands dynamically
                             Constraint::Length(1),
                             Constraint::Length(6),
                         ]

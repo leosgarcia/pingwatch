@@ -41,7 +41,7 @@ impl Drop for RawModeGuard {
 #[command(
     version = "v0.6.0",
     author = "hanshuaikang<https://github.com/hanshuaikang>",
-    about = "🏎  Nping mean NB Ping, A Ping Tool in Rust with Real-Time Data and Visualizations"
+    about = "🏎  PingWatch - A Ping Tool in Rust with Real-Time Data and Visualizations"
 )]
 struct Args {
     /// Target IP address or hostname to ping
@@ -316,15 +316,15 @@ async fn run_exporter_mode(
     interval: i32,
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // 创建 Prometheus metrics 收集器
+    // Create Prometheus metrics collector
     let prometheus_metrics = Arc::new(PrometheusMetrics::new()?);
 
-    // 创建信号处理通道
+    // Create signal handling channel
     let running = Arc::new(AtomicBool::new(true));
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
     let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
 
-    // 设置信号处理
+    // Setup signal handling
     let running_for_signal = running.clone();
     let shutdown_tx_for_signal = shutdown_tx.clone();
     tokio::spawn(async move {
@@ -333,7 +333,7 @@ async fn run_exporter_mode(
                 println!("\nReceived Ctrl+C, shutting down gracefully...");
                 running_for_signal.store(false, Ordering::Relaxed);
                 
-                // 发送关闭信号给 HTTP 服务器
+                // Send shutdown signal to HTTP server
                 if let Some(tx) = shutdown_tx_for_signal.lock().unwrap().take() {
                     let _ = tx.send(());
                 }
@@ -344,7 +344,7 @@ async fn run_exporter_mode(
         }
     });
 
-    // 去重目标地址，同时保留原始顺序
+    // Deduplicate target addresses while preserving original order
     let mut seen = std::collections::HashSet::new();
     let targets: Vec<String> = targets.into_iter()
         .filter(|item| seen.insert(item.clone()))
@@ -354,14 +354,14 @@ async fn run_exporter_mode(
         return Err("No valid targets provided".into());
     }
 
-    // 解析目标地址为 IP 地址
+    // Parse target addresses to IP addresses
     let mut target_pairs = Vec::new();
     for target in &targets {
         let ip = network::get_host_ipaddr(target, false)?;
         target_pairs.push((target.clone(), ip));
     }
 
-    println!("🚀 NPing Prometheus Exporter Mode Started");
+    println!("🚀 PingWatch Prometheus Exporter Mode Started");
     println!("┌─────────────────────────────────────────────────────────");
     println!("│ Targets     : {} host(s)", targets.len());
     for (i, target) in targets.iter().enumerate() {
@@ -378,7 +378,7 @@ async fn run_exporter_mode(
     println!("│ Actions     : Press Ctrl+C or q to stop");
     println!("└─────────────────────────────────────────────────────────");
 
-    // 启动 HTTP metrics 服务器
+    // Start HTTP metrics server
     let metrics_addr = format!("0.0.0.0:{}", port).parse()?;
     let metrics_for_server = prometheus_metrics.clone();
     let metrics_task = task::spawn(async move {

@@ -1,39 +1,39 @@
 use prometheus::{CounterVec, HistogramVec, HistogramOpts, Opts, Registry, TextEncoder};
 use std::sync::Arc;
 
-/// Prometheus 指标收集器
+/// Prometheus metrics collector
 #[derive(Debug, Clone)]
 pub struct PrometheusMetrics {
-    /// ping 延迟直方图指标
+    /// Ping latency histogram metric
     ping_duration_histogram: HistogramVec,
-    /// ping 请求总数（按状态分组）
+    /// Total number of ping requests (grouped by status)
     ping_requests_total: CounterVec,
-    /// Prometheus 注册表
+    /// Prometheus registry
     registry: Arc<Registry>,
 }
 
 impl PrometheusMetrics {
-    /// 创建新的 Prometheus 指标收集器
+    /// Creates a new Prometheus metrics collector
     pub fn new() -> Result<Self, prometheus::Error> {
-        // 创建注册表
+        // Create registry
         let registry = Arc::new(Registry::new());
 
-        // 定义延迟的 buckets (秒): 1ms, 5ms, 10ms, 50ms, 100ms, 500ms, 1s, 5s, 10s, +Inf
+        // Define latency buckets (in seconds): 1ms, 5ms, 10ms, 50ms, 100ms, 500ms, 1s, 5s, 10s, +Inf
         let buckets = vec![
             0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0,
         ];
 
-        // 创建直方图指标
+        // Create histogram metric
         let ping_duration_histogram = HistogramVec::new(
             HistogramOpts::new(
                 "nbping_ping_duration_seconds",
                 "Histogram of ping durations in seconds",
             )
                 .buckets(buckets),
-            &["target", "ip"], // label 名称
+            &["target", "ip"], // label names
         )?;
 
-        // 创建请求总数计数器
+        // Create counter for total ping requests
         let ping_requests_total = CounterVec::new(
             Opts::new(
                 "nbping_ping_requests_total",
@@ -42,7 +42,7 @@ impl PrometheusMetrics {
             &["target", "ip", "status"],
         )?;
 
-        // 注册指标
+        // Register metrics
         registry.register(Box::new(ping_duration_histogram.clone()))?;
         registry.register(Box::new(ping_requests_total.clone()))?;
 
@@ -53,7 +53,7 @@ impl PrometheusMetrics {
         })
     }
 
-    /// 记录成功的 ping（记录到直方图）
+    /// Records a successful ping (records to histogram)
     pub fn record_ping_success(&self, target: &str, ip: &str, rtt_ms: f64) {
         let rtt_seconds = rtt_ms / 1000.0;
 
@@ -61,27 +61,27 @@ impl PrometheusMetrics {
             .with_label_values(&[target, ip, "success"])
             .inc();
 
-        // 为直方图添加 labels 并观察值
+        // Add labels to histogram and observe value
         self.ping_duration_histogram
             .with_label_values(&[target, ip])
             .observe(rtt_seconds);
     }
 
-    /// 记录超时的 ping（不记录到直方图，但可以在这里添加其他指标）
+    /// Records a timed-out ping (not recorded in histogram, but other metrics can be added here)
     pub fn record_ping_timeout(&self, target: &str, ip: &str) {
         self.ping_requests_total
             .with_label_values(&[target, ip, "timeout"])
             .inc();
     }
 
-    /// 记录错误的 ping
+    /// Records a failed ping
     pub fn record_ping_error(&self, target: &str, ip: &str) {
         self.ping_requests_total
             .with_label_values(&[target, ip, "error"])
             .inc();
     }
 
-    /// 获取 Prometheus 格式的指标数据
+    /// Gets metrics data in Prometheus format
     pub fn gather(&self) -> String {
         let encoder = TextEncoder::new();
         let metric_families = self.registry.gather();
@@ -100,7 +100,7 @@ impl Default for PrometheusMetrics {
     }
 }
 
-/// HTTP 服务器，用于暴露 /metrics 端点
+/// HTTP server to expose /metrics endpoint
 pub mod http_server {
     use super::*;
     use hyper::service::service_fn;
@@ -114,7 +114,7 @@ pub mod http_server {
     use std::sync::Arc;
     use tokio::net::TcpListener;
 
-    /// 启动 Prometheus metrics HTTP 服务器，支持优雅关闭
+    /// Starts Prometheus metrics HTTP server with graceful shutdown support
     pub async fn start_metrics_server(
         metrics: Arc<PrometheusMetrics>,
         addr: SocketAddr,
@@ -124,7 +124,7 @@ pub mod http_server {
 
         loop {
             tokio::select! {
-                // 接受新连接
+                // Accept new connections
                 accept_result = listener.accept() => {
                     match accept_result {
                         Ok((stream, _)) => {
@@ -149,7 +149,7 @@ pub mod http_server {
                         }
                     }
                 }
-                // 接收关闭信号
+                // Receive shutdown signal
                 _ = &mut shutdown_rx => {
                     println!("Metrics server shutting down gracefully");
                     break;
@@ -160,7 +160,7 @@ pub mod http_server {
         Ok(())
     }
 
-    /// 处理 HTTP 请求
+    /// Handles HTTP requests
     async fn handle_request(
         req: Request<hyper::body::Incoming>,
         metrics: Arc<PrometheusMetrics>,
@@ -176,9 +176,9 @@ pub mod http_server {
             }
             (&Method::GET, "/") => {
                 let body = r#"<html>
-<head><title>NPing Metrics</title></head>
+<head><title>PingWatch Metrics</title></head>
 <body>
-<h1>NPing Metrics</h1>
+<h1>PingWatch Metrics</h1>
 <p><a href='/metrics'>Metrics</a></p>
 </body>
 </html>"#;

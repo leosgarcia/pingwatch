@@ -605,7 +605,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nping"
+name = "pingwatch"
 version = "0.6.0"
 dependencies = [
  "anyhow",
