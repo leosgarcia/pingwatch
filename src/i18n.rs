@@ -8,16 +8,16 @@ use rust_embed::RustEmbed;
 pub struct Locales;
 
 lazy_static::lazy_static! {
-    static ref BUNDLES: HashMap<String, FluentBundle<FluentResource>> = {
+    static ref BUNDLES: HashMap<String, FluentBundle<FluentResource, intl_memoizer::concurrent::IntlLangMemoizer>> = {
         let mut bundles = HashMap::new();
         
         for lang in &["en", "pt-BR", "es"] {
-            if let Ok(ftl_string) = Locales::get(&format!("{}/main.ftl", lang)) {
-                if let Ok(ftl_str) = std::str::from_utf8(&ftl_string.data) {
+            if let Some(ftl_file) = Locales::get(&format!("{}/main.ftl", lang)) {
+                if let Ok(ftl_str) = std::str::from_utf8(&ftl_file.data) {
                     if let Ok(resource) = FluentResource::try_new(ftl_str.to_string()) {
                         let lang_id: LanguageIdentifier = lang.parse()
                             .unwrap_or_else(|_| "en".parse().unwrap());
-                        let mut bundle = FluentBundle::new(vec![lang_id]);
+                        let mut bundle = FluentBundle::new_concurrent(vec![lang_id]);
                         let _ = bundle.add_resource(resource);
                         bundles.insert(lang.to_string(), bundle);
                     }

@@ -98,6 +98,7 @@ pub fn draw_point_view<B: Backend>(
             Span::raw(format!(" {}: ", i18n::t(lang, "label-loss"))),
             Span::styled(format!("{:.2}{}", loss_pkg, i18n::t(lang, "unit-percent")), Style::default().fg(loss_pkg_color)), 
         ]);
+        let mut points_spans: Vec<Span> = Vec::new();
         for &rtt in &ip.rtts {
             if rtt < 0.0 {
                 // Timeout/packet loss - red X
