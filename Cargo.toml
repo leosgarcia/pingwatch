@@ -19,7 +19,7 @@ http-body-util = "0.1"
 i18n-embed = "0.13"
 i18n-embed-fl = "0.6"
 rust-embed = "8.0"
-fluent = "0.16"
-intl-memoizer = { version = "0.5", features = ["concurrent"] }
+fluent = { version = "0.16", features = ["concurrent"] }
+intl-memoizer = "0.5"
 unic-langid = "0.9"
 lazy_static = "1.4"
