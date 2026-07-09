@@ -38,16 +38,16 @@ pub fn get_string(lang: &str, key: &str, args: Option<&HashMap<String, String>>)
             Some(message) => {
                 if let Some(pattern) = message.value() {
                     let mut errors = vec![];
+                    let mut fluent_args = fluent::FluentArgs::new();
+                    if let Some(a) = args {
+                        for (k, v) in a.iter() {
+                            fluent_args.set(k.as_str(), fluent::FluentValue::from(v.clone()));
+                        }
+                    }
+                    let args_ref = if args.is_some() { Some(&fluent_args) } else { None };
                     let value = bundle.format_pattern(
                         pattern,
-                        args.map(|a| {
-                            a.iter()
-                                .map(|(k, v)| {
-                                    (k.as_str(), fluent::FluentValue::from(v.clone()))
-                                })
-                                .collect::<HashMap<_, _>>()
-                        })
-                        .as_ref(),
+                        args_ref,
                         &mut errors,
                     );
                     value.to_string()
