@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use unic_langid::LanguageIdentifier;
 use rust_embed::RustEmbed;
 
+use std::cell::RefCell;
+
 #[derive(RustEmbed)]
 #[folder = "locales"]
 pub struct Locales;
 
-lazy_static::lazy_static! {
-    static ref BUNDLES: std::sync::Mutex<HashMap<String, FluentBundle<FluentResource>>> = std::sync::Mutex::new(init_bundles());
+thread_local! {
+    static BUNDLES: RefCell<HashMap<String, FluentBundle<FluentResource>>> = RefCell::new(init_bundles());
 }
 
 fn init_bundles() -> HashMap<String, FluentBundle<FluentResource>> {
@@ -33,36 +35,38 @@ fn init_bundles() -> HashMap<String, FluentBundle<FluentResource>> {
 
 /// Get a localized string
 pub fn get_string(lang: &str, key: &str, args: Option<&HashMap<String, String>>) -> String {
-    let map = BUNDLES.lock().unwrap();
-    let bundle = map.get(lang).or_else(|| map.get("en"));
-    
-    if let Some(bundle) = bundle {
-        match bundle.get_message(key) {
-            Some(message) => {
-                if let Some(pattern) = message.value() {
-                    let mut errors = vec![];
-                    let mut fluent_args = fluent::FluentArgs::new();
-                    if let Some(a) = args {
-                        for (k, v) in a.iter() {
-                            fluent_args.set(k.as_str(), fluent::FluentValue::from(v.clone()));
+    BUNDLES.with(|bundles_ref| {
+        let map = bundles_ref.borrow();
+        let bundle = map.get(lang).or_else(|| map.get("en"));
+        
+        if let Some(bundle) = bundle {
+            match bundle.get_message(key) {
+                Some(message) => {
+                    if let Some(pattern) = message.value() {
+                        let mut errors = vec![];
+                        let mut fluent_args = fluent::FluentArgs::new();
+                        if let Some(a) = args {
+                            for (k, v) in a.iter() {
+                                fluent_args.set(k.as_str(), fluent::FluentValue::from(v.clone()));
+                            }
                         }
+                        let args_ref = if args.is_some() { Some(&fluent_args) } else { None };
+                        let value = bundle.format_pattern(
+                            pattern,
+                            args_ref,
+                            &mut errors,
+                        );
+                        value.to_string()
+                    } else {
+                        key.to_string()
                     }
-                    let args_ref = if args.is_some() { Some(&fluent_args) } else { None };
-                    let value = bundle.format_pattern(
-                        pattern,
-                        args_ref,
-                        &mut errors,
-                    );
-                    value.to_string()
-                } else {
-                    key.to_string()
                 }
+                None => key.to_string(),
             }
-            None => key.to_string(),
+        } else {
+            key.to_string()
         }
-    } else {
-        key.to_string()
-    }
+    })
 }
 
 /// Helper to get string without arguments
