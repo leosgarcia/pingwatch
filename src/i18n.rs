@@ -1,5 +1,4 @@
 use fluent::{FluentBundle, FluentResource};
-use intl_memoizer::concurrent::IntlLangMemoizer;
 use std::collections::HashMap;
 use unic_langid::LanguageIdentifier;
 use rust_embed::RustEmbed;
@@ -9,10 +8,10 @@ use rust_embed::RustEmbed;
 pub struct Locales;
 
 lazy_static::lazy_static! {
-    static ref BUNDLES: HashMap<String, FluentBundle<FluentResource, IntlLangMemoizer>> = init_bundles();
+    static ref BUNDLES: std::sync::Mutex<HashMap<String, FluentBundle<FluentResource>>> = std::sync::Mutex::new(init_bundles());
 }
 
-fn init_bundles() -> HashMap<String, FluentBundle<FluentResource, IntlLangMemoizer>> {
+fn init_bundles() -> HashMap<String, FluentBundle<FluentResource>> {
     let mut bundles = HashMap::new();
     
     for lang in &["en", "pt-BR", "es"] {
@@ -21,7 +20,7 @@ fn init_bundles() -> HashMap<String, FluentBundle<FluentResource, IntlLangMemoiz
                 if let Ok(resource) = FluentResource::try_new(ftl_str.to_string()) {
                     let lang_id: LanguageIdentifier = lang.parse()
                         .unwrap_or_else(|_| "en".parse().unwrap());
-                    let mut bundle = FluentBundle::new_concurrent(vec![lang_id]);
+                    let mut bundle = FluentBundle::new(vec![lang_id]);
                     let _ = bundle.add_resource(resource);
                     bundles.insert(lang.to_string(), bundle);
                 }
@@ -34,7 +33,8 @@ fn init_bundles() -> HashMap<String, FluentBundle<FluentResource, IntlLangMemoiz
 
 /// Get a localized string
 pub fn get_string(lang: &str, key: &str, args: Option<&HashMap<String, String>>) -> String {
-    let bundle = BUNDLES.get(lang).or_else(|| BUNDLES.get("en"));
+    let map = BUNDLES.lock().unwrap();
+    let bundle = map.get(lang).or_else(|| map.get("en"));
     
     if let Some(bundle) = bundle {
         match bundle.get_message(key) {
