@@ -1,17 +1,21 @@
-# Guia de Contribuição
+# Guia de ContribuiÃ§Ã£o â€” PingWatch
 
-Obrigado por se interessar em contribuir para este projeto! Aceitamos contribuições de todos os tamanhos, desde correções de bugs até novas funcionalidades.
+Obrigado por se interessar em contribuir para este projeto! Aceitamos contribuiÃ§Ãµes de todos os tamanhos, desde correÃ§Ãµes de bugs atÃ© novas funcionalidades.
+
+---
 
 ## Como contribuir
 
-1. Faça um Fork deste repositório.
-2. Crie uma branch para sua alteração: `git checkout -b minha-alteracao`
-3. Commit suas alterações: `git commit -m 'feat: adiciona nova alteração'`
-4. Faça o push para a sua branch: `git push origin minha-alteracao`
-5. Abra um Pull Request no repositório original descrevendo as mudanças.
+1. FaÃ§a um **Fork** deste repositÃ³rio.
+2. Crie uma branch para sua alteraÃ§Ã£o: `git checkout -b feat/minha-alteracao`
+3. Commit suas alteraÃ§Ãµes: `git commit -m 'feat: adiciona nova funcionalidade'`
+4. FaÃ§a o push para a sua branch: `git push origin feat/minha-alteracao`
+5. Abra um **Pull Request** no repositÃ³rio original descrevendo as mudanÃ§as.
 
-## Padrão de Commits
+---
+
+## PadrÃ£o de Commits
 
 Recomendamos seguir o [Conventional Commits](https://www.conventionalcommits.org/).
 
-Qualquer dúvida, sinta-se livre para abrir uma Issue!
+Qualquer dÃºvida, sinta-se livre para abrir uma Issue!
